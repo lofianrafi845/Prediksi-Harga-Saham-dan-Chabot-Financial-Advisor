@@ -17,119 +17,130 @@ except ImportError:
 # ── Page config ──────────────────────────────────────────────
 st.set_page_config(
     page_title="StockMaster AI",
-    page_icon="📈",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ── CSS Styling ───────────────────────────────────────────────
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
+
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
-    
+
+    /* ── Main header ─────────────────────────────── */
     .main-header {
         background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
-        padding: 2rem 2.5rem;
-        border-radius: 16px;
-        margin-bottom: 1.5rem;
+        padding: 1.5rem 2rem;
+        border-radius: 12px;
+        margin-bottom: 1.2rem;
         border: 1px solid #1e40af33;
         box-shadow: 0 4px 32px rgba(59,130,246,0.15);
     }
     .main-header h1 {
         color: #f8fafc;
-        font-size: 2.2rem;
+        font-size: 1.8rem;
         font-weight: 700;
         margin: 0;
         letter-spacing: -0.5px;
     }
     .main-header p {
         color: #94a3b8;
-        margin: 0.4rem 0 0;
-        font-size: 1rem;
+        margin: 0.3rem 0 0;
+        font-size: 0.9rem;
     }
-    
+
+    /* ── Metric cards ────────────────────────────── */
     .metric-card {
         background: linear-gradient(135deg, #1e293b, #0f172a);
         border: 1px solid #334155;
         border-radius: 12px;
-        padding: 1.2rem 1.5rem;
+        padding: 1rem 1.2rem;
         text-align: center;
         transition: transform 0.2s;
+        margin-bottom: 0.5rem;
     }
     .metric-card:hover { transform: translateY(-2px); }
     .metric-label {
         color: #94a3b8;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.8px;
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.3rem;
     }
     .metric-value {
         color: #f8fafc;
-        font-size: 1.5rem;
+        font-size: 1.3rem;
         font-weight: 700;
+        word-break: break-all;
     }
-    .metric-delta-up   { color: #10b981; font-size: 0.82rem; }
-    .metric-delta-down { color: #ef4444; font-size: 0.82rem; }
-    
+    .metric-delta-up   { color: #10b981; font-size: 0.78rem; }
+    .metric-delta-down { color: #ef4444; font-size: 0.78rem; }
+
+    /* ── Section headers ─────────────────────────── */
     .section-header {
         color: #e2e8f0;
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
-        margin: 1.5rem 0 0.8rem;
+        margin: 1.2rem 0 0.6rem;
         padding-bottom: 0.4rem;
         border-bottom: 2px solid #1e40af44;
     }
-    
+
+    /* ── Chat bubbles ────────────────────────────── */
     .chat-bubble-user {
         background: linear-gradient(135deg, #1e40af, #1d4ed8);
         color: #f8fafc;
         border-radius: 16px 16px 4px 16px;
-        padding: 0.8rem 1.2rem;
+        padding: 0.7rem 1rem;
         margin: 0.5rem 0;
-        max-width: 80%;
+        max-width: 90%;
         margin-left: auto;
         box-shadow: 0 2px 8px rgba(30,64,175,0.3);
-        font-size: 0.92rem;
+        font-size: 0.88rem;
+        word-wrap: break-word;
     }
     .chat-bubble-bot {
         background: linear-gradient(135deg, #1e293b, #0f172a);
         color: #e2e8f0;
         border: 1px solid #334155;
         border-radius: 16px 16px 16px 4px;
-        padding: 0.8rem 1.2rem;
+        padding: 0.7rem 1rem;
         margin: 0.5rem 0;
-        max-width: 85%;
+        max-width: 95%;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        font-size: 0.92rem;
+        font-size: 0.88rem;
         line-height: 1.6;
+        word-wrap: break-word;
     }
-    .chat-role-user { text-align: right; color: #60a5fa; font-size: 0.72rem; margin-bottom: 0.2rem; }
-    .chat-role-bot  { color: #34d399; font-size: 0.72rem; margin-bottom: 0.2rem; }
-    
+    .chat-role-user { text-align: right; color: #60a5fa; font-size: 0.68rem; margin-bottom: 0.2rem; }
+    .chat-role-bot  { color: #34d399; font-size: 0.68rem; margin-bottom: 0.2rem; }
+
+    /* ── Colors ──────────────────────────────────── */
     .prediction-up   { color: #10b981; font-weight: 600; }
     .prediction-down { color: #ef4444; font-weight: 600; }
-    
+
+    /* ── Buttons ─────────────────────────────────── */
     .stButton > button {
         background: linear-gradient(135deg, #1e40af, #1d4ed8);
         color: white;
         border: none;
         border-radius: 8px;
-        padding: 0.5rem 1.5rem;
+        padding: 0.5rem 1.2rem;
         font-weight: 500;
         transition: all 0.2s;
+        width: 100%;
     }
     .stButton > button:hover {
         background: linear-gradient(135deg, #1d4ed8, #2563eb);
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(30,64,175,0.4);
     }
-    
+
+    /* ── Badges ──────────────────────────────────── */
     .info-badge {
         display: inline-block;
         background: #1e3a5f44;
@@ -137,25 +148,27 @@ st.markdown("""
         color: #60a5fa;
         border-radius: 20px;
         padding: 0.15rem 0.7rem;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 500;
         margin: 0.2rem;
     }
-    
+
     .sidebar-title {
         color: #f8fafc;
         font-weight: 700;
         font-size: 1.1rem;
         margin-bottom: 0.5rem;
     }
-    
+
     div[data-testid="stSelectbox"] label,
     div[data-testid="stSlider"] label,
     div[data-testid="stRadio"] label { color: #cbd5e1 !important; }
-    
+
     .stTabs [data-baseweb="tab"] {
         color: #94a3b8;
         font-weight: 500;
+        font-size: 0.88rem;
+        padding: 0.5rem 0.8rem;
     }
     .stTabs [aria-selected="true"] {
         color: #60a5fa !important;
@@ -164,6 +177,45 @@ st.markdown("""
 
     /* dark theme for plotly */
     .js-plotly-plot .plotly { background: transparent !important; }
+
+    /* ── Responsive: tablet (max 768px) ─────────── */
+    @media (max-width: 768px) {
+        .main-header { padding: 1rem 1.2rem; border-radius: 10px; }
+        .main-header h1 { font-size: 1.3rem; }
+        .main-header p { font-size: 0.8rem; }
+
+        .metric-value { font-size: 1rem; }
+        .metric-label { font-size: 0.65rem; }
+
+        .section-header { font-size: 0.9rem; }
+
+        .chat-bubble-user, .chat-bubble-bot {
+            max-width: 100%;
+            font-size: 0.84rem;
+        }
+
+        /* Stack columns vertically on mobile */
+        div[data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+
+        /* Reduce plotly chart height on mobile */
+        .js-plotly-plot { min-height: 280px; }
+
+        .stTabs [data-baseweb="tab"] {
+            font-size: 0.78rem;
+            padding: 0.4rem 0.5rem;
+        }
+    }
+
+    /* ── Responsive: small phone (max 480px) ────── */
+    @media (max-width: 480px) {
+        .main-header h1 { font-size: 1.1rem; }
+        .metric-value { font-size: 0.9rem; }
+        .info-badge { font-size: 0.65rem; padding: 0.1rem 0.5rem; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -251,11 +303,11 @@ def simulate_lstm_prediction(df_ticker, future_days=30):
 def call_groq_api(messages: list, system_prompt: str) -> str:
     """Call Groq API via groq."""
     if not groq_available:
-        return "⚠️ `groq` belum terinstal. Jalankan: `pip install groq`"
+        return "groq belum terinstal. Jalankan: pip install groq"
     try:
         api_key = st.session_state.get("api_key", "")
         if not api_key:
-            return "⚠️ Masukkan Groq API Key di sidebar untuk mengaktifkan chatbot."
+            return "Masukkan Groq API Key di sidebar untuk mengaktifkan chatbot."
         
         client = Groq(api_key=api_key)
         
@@ -273,7 +325,7 @@ def call_groq_api(messages: list, system_prompt: str) -> str:
         )
         return completion.choices[0].message.content
     except Exception as e:
-        return f"⚠️ Error API: {str(e)}"
+        return f"Error API: {str(e)}"
 
 def build_rag_context(df: pd.DataFrame, ticker: str, question: str) -> str:
     """Build relevant context from stock data for RAG."""
@@ -332,12 +384,12 @@ df = load_stock_data()
 
 # ── Sidebar ───────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown('<div class="sidebar-title">📈 StockMaster AI</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-title">StockMaster AI</div>', unsafe_allow_html=True)
     st.markdown("---")
-    
-    st.markdown("**🔑 API Key (Groq)**")
+
+    st.markdown("**API Key (Groq)**")
     if not groq_available:
-        st.error("⚠️ **groq** belum terinstal.")
+        st.error("Package groq belum terinstal.")
         st.info("Jalankan `pip install groq` untuk mengaktifkan fitur ini.")
     else:
         api_key_input = st.text_input(
@@ -349,23 +401,23 @@ with st.sidebar:
         )
         if api_key_input:
             st.session_state.api_key = api_key_input
-            st.success("✅ API Key tersimpan")
+            st.success("API Key tersimpan")
         else:
-            st.info("💡 Masukkan API key untuk aktifkan chatbot")
+            st.info("Masukkan API key untuk aktifkan chatbot")
     
     st.markdown("---")
-    st.markdown("**📊 Pilih Saham**")
+    st.markdown("**Pilih Saham**")
     tickers_list = sorted(df['Ticker'].unique().tolist())
     selected_ticker = st.selectbox("Ticker", tickers_list, index=0, label_visibility="collapsed")
     
-    st.markdown("**🔮 Model Prediksi**")
+    st.markdown("**Model Prediksi**")
     model_choice = st.radio(
         "Model",
         ["XGBoost", "LSTM", "Ensemble (XGB + LSTM)"],
         label_visibility="collapsed",
     )
     
-    st.markdown("**📅 Horizon Prediksi**")
+    st.markdown("**Rentang Prediksi**")
     future_days = st.slider("Hari ke depan", 7, 90, 30, label_visibility="collapsed")
     
     st.markdown("---")
@@ -375,8 +427,8 @@ with st.sidebar:
 # ── Main header ───────────────────────────────────────────────
 st.markdown(f"""
 <div class="main-header">
-    <h1>📈 StockMaster AI</h1>
-    <p>Prediksi Harga Saham Indonesia &amp; Financial Advisor berbasis AI — IDX Bursa Efek Indonesia</p>
+    <h1>StockMaster AI</h1>
+    <p>Prediksi Harga Saham Indonesia &amp; Financial Advisor — IDX Bursa Efek Indonesia</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -410,7 +462,7 @@ for col, (lbl, val, sub, sub_cls) in zip([c1,c2,c3,c4,c5], metrics):
 st.markdown("")
 
 # ── Tabs ──────────────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["📊 Prediksi Harga", "🤖 Financial Advisor", "📋 Data & Fundamental"])
+tab1, tab2, tab3 = st.tabs(["Prediksi Harga", "Financial Advisor", "Data & Fundamental"])
 
 # ══════════════════════════════════════════════════════════════
 # TAB 1 — Prediksi
@@ -422,7 +474,7 @@ with tab1:
     col_left, col_right = st.columns([2, 1])
     
     with col_left:
-        st.markdown(f'<div class="section-header">📈 Riwayat & Prediksi Harga — {selected_ticker}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="section-header">Riwayat & Prediksi Harga — {selected_ticker}</div>', unsafe_allow_html=True)
         
         # Historical data (last 180 days)
         df_hist = df_sel.tail(180)
@@ -530,7 +582,7 @@ with tab1:
         st.plotly_chart(fig, use_container_width=True)
     
     with col_right:
-        st.markdown(f'<div class="section-header">🎯 Ringkasan Prediksi</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="section-header">Ringkasan Prediksi</div>', unsafe_allow_html=True)
         
         if model_choice == "XGBoost":
             active_pred = xgb_preds
@@ -565,7 +617,7 @@ with tab1:
         </div>""", unsafe_allow_html=True)
         
         # Model performance simulation
-        st.markdown('<div class="section-header">📐 Performa Model (Simulasi)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Performa Model (Simulasi)</div>', unsafe_allow_html=True)
         perf = {
             "XGBoost":  {"RMSE": "245.3", "MAE": "189.2", "R²": "0.94"},
             "LSTM":     {"RMSE": "198.7", "MAE": "161.5", "R²": "0.96"},
@@ -576,24 +628,26 @@ with tab1:
                         f"<span style='color:#94a3b8;font-size:0.85rem'>{k}</span>"
                         f"<span style='color:#f8fafc;font-weight:600;font-size:0.85rem'>{v}</span></div>",
                         unsafe_allow_html=True)
-        
+
         # Trend signal
-        st.markdown('<div class="section-header">📡 Sinyal Teknikal</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Sinyal Teknikal</div>', unsafe_allow_html=True)
         bull = latest['MA5'] > latest['MA20']
-        trend_txt = "🟢 Bullish" if bull else "🔴 Bearish"
+        trend_lbl = "Bullish" if bull else "Bearish"
+        trend_color = "#10b981" if bull else "#ef4444"
         rsi_proxy = min(max((latest['Close_Price'] - latest['MA20']) / (latest['MA20'] + 1e-9) * 100 + 50, 10), 90)
+        rsi_note = "(Overbought)" if rsi_proxy > 70 else "(Oversold)" if rsi_proxy < 30 else "(Netral)"
         st.markdown(f"""
         <div style='background:#1e293b;border-radius:10px;padding:1rem;'>
-            <div style='color:#e2e8f0;font-size:1.1rem;font-weight:600;margin-bottom:0.5rem'>{trend_txt}</div>
-            <div style='color:#94a3b8;font-size:0.82rem'>MA5 {'>' if bull else '<'} MA20 → {'Uptrend' if bull else 'Downtrend'}</div>
-            <div style='color:#94a3b8;font-size:0.82rem;margin-top:0.3rem'>RSI Proxy: {rsi_proxy:.0f} {"(Overbought ⚠️)" if rsi_proxy > 70 else "(Oversold ⚠️)" if rsi_proxy < 30 else "(Netral)"}</div>
+            <div style='color:{trend_color};font-size:1rem;font-weight:600;margin-bottom:0.5rem'>{trend_lbl}</div>
+            <div style='color:#94a3b8;font-size:0.82rem'>MA5 {'>' if bull else '<'} MA20 — {'Uptrend' if bull else 'Downtrend'}</div>
+            <div style='color:#94a3b8;font-size:0.82rem;margin-top:0.3rem'>RSI Proxy: {rsi_proxy:.0f} {rsi_note}</div>
         </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
 # TAB 2 — Chatbot
 # ══════════════════════════════════════════════════════════════
 with tab2:
-    SYSTEM_PROMPT = """Kamu adalah StockMaster AI, asisten analis saham Indonesia yang cerdas, ramah, dan membantu.
+    SYSTEM_PROMPT = """Kamu adalah StockMaster AI, asisten analis saham Indonesia yang cerdas dan membantu.
 Kamu memiliki akses ke data fundamental dan teknikal saham-saham IDX (Bursa Efek Indonesia).
 
 Panduan menjawab:
@@ -603,31 +657,30 @@ Panduan menjawab:
 - Sertakan satuan mata uang (Rupiah) dan tanggal saat menyebutkan angka.
 - Berikan penjelasan singkat tentang apa arti metrik (ROE, DER, dll) jika diperlukan.
 - JANGAN memberikan rekomendasi beli/jual yang pasti. Sampaikan sebagai analisis informatif.
-- Gunakan emoji secukupnya agar respons lebih menarik dan mudah dibaca.
 - Tambahkan disclaimer bahwa analisis bukan saran investasi resmi."""
 
     col_chat, col_info = st.columns([3, 1])
-    
+
     with col_chat:
-        st.markdown('<div class="section-header">🤖 Financial Advisor AI</div>', unsafe_allow_html=True)
-        
+        st.markdown('<div class="section-header">Financial Advisor</div>', unsafe_allow_html=True)
+
         if not groq_available:
-            st.error("⚠️ Fitur Chatbot tidak aktif karena package `groq` belum terinstal.")
+            st.error("Fitur Chatbot tidak aktif karena package groq belum terinstal.")
             st.info("Silakan instal dengan menjalankan perintah berikut di terminal Anda:\n```bash\npip install groq\n```\nSetelah instalasi selesai, jalankan ulang atau refresh halaman Streamlit ini.")
-        
+
         # Chat display
         chat_container = st.container()
         with chat_container:
             if not st.session_state.chat_history:
                 st.markdown("""
                 <div class="chat-bubble-bot">
-                    👋 Halo! Saya <b>StockMaster AI</b>, asisten analisis saham IDX Anda.<br><br>
+                    Halo! Saya <b>StockMaster AI</b>, asisten analisis saham IDX Anda.<br><br>
                     Saya bisa membantu Anda dengan:<br>
-                    • 📊 Analisis harga dan tren saham<br>
-                    • 📈 Interpretasi indikator teknikal (MA, Volatilitas)<br>
-                    • 💼 Analisis fundamental (ROE, DER, ROA, EPS)<br>
-                    • 🔍 Perbandingan antar saham<br><br>
-                    Silakan tanyakan apapun tentang saham IDX! (Pastikan API Key Groq sudah diisi di sidebar)
+                    - Analisis harga dan tren saham<br>
+                    - Interpretasi indikator teknikal (MA, Volatilitas)<br>
+                    - Analisis fundamental (ROE, DER, ROA, EPS)<br>
+                    - Perbandingan antar saham<br><br>
+                    Silakan tanyakan apapun tentang saham IDX. Pastikan API Key Groq sudah diisi di sidebar.
                 </div>""", unsafe_allow_html=True)
             
             for msg in st.session_state.chat_history:
@@ -638,7 +691,7 @@ Panduan menjawab:
                     """, unsafe_allow_html=True)
                 else:
                     st.markdown(f"""
-                    <div class="chat-role-bot">🤖 StockMaster AI</div>
+                    <div class="chat-role-bot">StockMaster AI</div>
                     <div class="chat-bubble-bot">{msg['content']}</div>
                     """, unsafe_allow_html=True)
         
@@ -672,9 +725,9 @@ PERTANYAAN USER:
                 for m in st.session_state.chat_history
             ]
             
-            with st.spinner("🤔 Menganalisis..."):
+            with st.spinner("Menganalisis..."):
                 response = call_groq_api(api_messages, SYSTEM_PROMPT)
-            
+
             st.session_state.chat_history.append({
                 'role': 'assistant',
                 'content': response,
@@ -684,12 +737,12 @@ PERTANYAAN USER:
         
         # Reset button
         if st.session_state.chat_history:
-            if st.button("🗑️ Reset Chat"):
+            if st.button("Reset Chat"):
                 st.session_state.chat_history = []
                 st.rerun()
     
     with col_info:
-        st.markdown('<div class="section-header">💡 Contoh Pertanyaan</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Contoh Pertanyaan</div>', unsafe_allow_html=True)
         
         examples = [
             f"Berapa harga penutupan {selected_ticker} terbaru?",
@@ -708,14 +761,14 @@ PERTANYAAN USER:
                     'role': 'user', 'content': augmented, 'display_content': ex,
                 })
                 api_messages = [{'role': m['role'], 'content': m['content']} for m in st.session_state.chat_history]
-                with st.spinner("🤔 Menganalisis..."):
+                with st.spinner("Menganalisis..."):
                     response = call_groq_api(api_messages, SYSTEM_PROMPT)
                 st.session_state.chat_history.append({
                     'role': 'assistant', 'content': response, 'display_content': response,
                 })
                 st.rerun()
         
-        st.markdown('<div class="section-header">📌 Saham Aktif</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Saham Aktif (ROE Tertinggi)</div>', unsafe_allow_html=True)
         df_latest = df.groupby('Ticker').last().reset_index()
         for _, row in df_latest.sort_values('ROE', ascending=False).head(5).iterrows():
             roe_color = "#10b981" if row['ROE'] > 0.15 else "#f59e0b"
@@ -735,7 +788,7 @@ with tab3:
     col_a, col_b = st.columns(2)
     
     with col_a:
-        st.markdown('<div class="section-header">📋 Data Historis Terbaru</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Data Historis Terbaru</div>', unsafe_allow_html=True)
         df_show = df_sel.sort_values('Tanggal', ascending=False).head(20).copy()
         df_show['Tanggal'] = df_show['Tanggal'].dt.strftime('%d %b %Y')
         df_show['Close_Price'] = df_show['Close_Price'].apply(lambda x: f"Rp {x:,.0f}")
@@ -745,9 +798,9 @@ with tab3:
             columns={'Close_Price':'Harga','Volatility20':'Volatil'}
         )
         st.dataframe(df_show, use_container_width=True, height=340)
-    
+
     with col_b:
-        st.markdown('<div class="section-header">📊 Perbandingan Fundamental</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Perbandingan Fundamental</div>', unsafe_allow_html=True)
         df_comp = df.groupby('Ticker').last().reset_index()
         metric_sel = st.selectbox("Pilih Metrik", ["ROE", "ROA", "DER", "Basic EPS", "Volatility20"], index=0)
         
@@ -778,8 +831,8 @@ with tab3:
         fig_bar.update_xaxes(showgrid=False)
         fig_bar.update_yaxes(showgrid=True, gridcolor='#1e293b')
         st.plotly_chart(fig_bar, use_container_width=True)
-    
-    st.markdown('<div class="section-header">🔥 Heatmap Korelasi Fitur</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-header">Heatmap Korelasi Fitur</div>', unsafe_allow_html=True)
     
     features = ['Close_Price', 'Basic EPS', 'DER', 'ROA', 'ROE', 'MA5', 'MA20', 'Volatility20']
     corr = df_sel[features].corr().round(2)
@@ -804,10 +857,10 @@ with tab3:
 
 # ── Footer ────────────────────────────────────────────────────
 st.markdown("""
-<div style='text-align:center;color:#475569;font-size:0.78rem;padding:1.5rem 0 0.5rem;
+<div style='text-align:center;color:#475569;font-size:0.76rem;padding:1.5rem 0 0.5rem;
             border-top:1px solid #1e293b;margin-top:1.5rem'>
-    ⚠️ <b>Disclaimer:</b> Analisis ini bersifat informatif dan bukan merupakan saran investasi resmi.
-    Selalu lakukan riset mendalam dan konsultasikan dengan penasihat keuangan sebelum berinvestasi. &nbsp;|&nbsp;
-    StockMaster AI © 2025 — Powered by Groq AI + Streamlit
+    <b>Disclaimer:</b> Analisis ini bersifat informatif dan bukan merupakan saran investasi resmi.
+    Selalu lakukan riset mendalam dan konsultasikan dengan penasihat keuangan sebelum berinvestasi.
+    &nbsp;|&nbsp; StockMaster AI &copy; 2025
 </div>
 """, unsafe_allow_html=True)
