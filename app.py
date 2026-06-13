@@ -469,7 +469,6 @@ tab1, tab2, tab3 = st.tabs(["Prediksi Harga", "Financial Advisor", "Data & Funda
 # ══════════════════════════════════════════════════════════════
 with tab1:
     import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
     
     col_left, col_right = st.columns([2, 1])
     
@@ -498,87 +497,92 @@ with tab1:
         lstm_preds = simulate_lstm_prediction(df_hist, future_days)
         ens_preds  = (xgb_preds * 0.5 + lstm_preds * 0.5)
         
-        fig = make_subplots(
-            rows=2, cols=1,
-            shared_xaxes=True,
-            row_heights=[0.75, 0.25],
-            vertical_spacing=0.04,
-        )
-        
-        # Candlestick-like: actual prices
+        fig = go.Figure()
+
+        # ── Historical line (solid blue) ────────────────────────
         fig.add_trace(go.Scatter(
             x=hist_dates, y=hist_prices,
-            mode='lines', name='Harga Aktual',
-            line=dict(color='#60a5fa', width=2),
-        ), row=1, col=1)
-        
-        # MA lines
-        fig.add_trace(go.Scatter(
-            x=hist_dates, y=hist_ma5,
-            mode='lines', name='MA5',
-            line=dict(color='#f59e0b', width=1, dash='dot'),
-        ), row=1, col=1)
-        fig.add_trace(go.Scatter(
-            x=hist_dates, y=hist_ma20,
-            mode='lines', name='MA20',
-            line=dict(color='#a78bfa', width=1, dash='dot'),
-        ), row=1, col=1)
-        
-        # Predictions
+            mode='lines', name='Historical Data',
+            line=dict(color='#1a56ff', width=2),
+            hovertemplate='%{x|%d %b %Y}<br>Price: %{y:,.0f}<extra></extra>',
+        ))
+
+        # ── Prediction line (dashed yellow) ─────────────────────
         all_pred_x = [last_date] + fut_dates
-        
+
         if model_choice == "XGBoost":
             all_pred_y = [hist_prices[-1]] + xgb_preds.tolist()
-            fig.add_trace(go.Scatter(
-                x=all_pred_x, y=all_pred_y,
-                mode='lines+markers', name='Prediksi XGBoost',
-                line=dict(color='#10b981', width=2, dash='dash'),
-                marker=dict(size=4),
-            ), row=1, col=1)
+            pred_label = 'Prediction'
         elif model_choice == "LSTM":
             all_pred_y = [hist_prices[-1]] + lstm_preds.tolist()
-            fig.add_trace(go.Scatter(
-                x=all_pred_x, y=all_pred_y,
-                mode='lines+markers', name='Prediksi LSTM',
-                line=dict(color='#f472b6', width=2, dash='dash'),
-                marker=dict(size=4),
-            ), row=1, col=1)
+            pred_label = 'Prediction'
         else:
-            yxgb = [hist_prices[-1]] + xgb_preds.tolist()
-            ylstm = [hist_prices[-1]] + lstm_preds.tolist()
-            yens  = [hist_prices[-1]] + ens_preds.tolist()
-            fig.add_trace(go.Scatter(x=all_pred_x, y=yxgb, mode='lines', name='XGBoost',
-                line=dict(color='#10b981', width=1.5, dash='dot')), row=1, col=1)
-            fig.add_trace(go.Scatter(x=all_pred_x, y=ylstm, mode='lines', name='LSTM',
-                line=dict(color='#f472b6', width=1.5, dash='dot')), row=1, col=1)
-            fig.add_trace(go.Scatter(x=all_pred_x, y=yens, mode='lines+markers', name='Ensemble',
-                line=dict(color='#fbbf24', width=2.5, dash='dash'), marker=dict(size=4)), row=1, col=1)
-        
-        # Volume proxy (volatility)
-        fig.add_trace(go.Bar(
-            x=hist_dates,
-            y=df_hist['Volatility20'].values,
-            name='Volatilitas', marker_color='#334155',
-        ), row=2, col=1)
-        
-        fig.update_layout(
-            height=480,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(15,23,42,0.8)',
-            font=dict(color='#94a3b8', family='Inter'),
-            legend=dict(
-                bgcolor='rgba(30,41,59,0.8)',
-                bordercolor='#334155',
-                orientation='h',
-                yanchor='bottom', y=1.02,
-                xanchor='right', x=1,
-            ),
-            margin=dict(l=10, r=10, t=10, b=10),
-            xaxis2=dict(showgrid=False, zeroline=False),
-            yaxis=dict(showgrid=True, gridcolor='#1e293b', zeroline=False),
-            yaxis2=dict(showgrid=False, zeroline=False, title='Volatilitas'),
+            all_pred_y = [hist_prices[-1]] + ens_preds.tolist()
+            pred_label = 'Prediction'
+
+        fig.add_trace(go.Scatter(
+            x=all_pred_x, y=all_pred_y,
+            mode='lines', name=pred_label,
+            line=dict(color='#f5c518', width=2.5, dash='dash'),
+            hovertemplate='%{x|%d %b %Y}<br>Predicted: %{y:,.0f}<extra></extra>',
+        ))
+
+        # ── Vertical dashed red separator line ──────────────────
+        y_min = min(hist_prices + all_pred_y)
+        y_max = max(hist_prices + all_pred_y)
+        y_pad = (y_max - y_min) * 0.05
+
+        fig.add_shape(
+            type='line',
+            x0=last_date, x1=last_date,
+            y0=y_min - y_pad, y1=y_max + y_pad,
+            line=dict(color='#ef4444', width=1.5, dash='dot'),
+            layer='above',
         )
-        fig.update_xaxes(showgrid=False, zeroline=False)
+
+        # ── Layout: dark theme matching the reference image ──────
+        ticker_label = f"{selected_ticker}.JK" if not selected_ticker.endswith('.JK') else selected_ticker
+        fig.update_layout(
+            title=dict(
+                text=f"Stock Price Prediction for {ticker_label}",
+                font=dict(color='#e2e8f0', size=14, family='Inter'),
+                x=0, xanchor='left',
+                pad=dict(l=8, t=4),
+            ),
+            height=420,
+            paper_bgcolor='#0d1117',
+            plot_bgcolor='#0d1117',
+            font=dict(color='#8b949e', family='Inter', size=11),
+            legend=dict(
+                bgcolor='rgba(0,0,0,0)',
+                borderwidth=0,
+                orientation='v',
+                yanchor='top', y=0.98,
+                xanchor='right', x=0.99,
+                font=dict(color='#c9d1d9', size=11),
+            ),
+            xaxis=dict(
+                showgrid=True,
+                gridcolor='#21262d',
+                gridwidth=1,
+                zeroline=False,
+                tickfont=dict(color='#8b949e', size=10),
+                title=dict(text='Date', font=dict(color='#8b949e', size=11)),
+                tickformat='%b %-d\n%Y',
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor='#21262d',
+                gridwidth=1,
+                zeroline=False,
+                tickfont=dict(color='#8b949e', size=10),
+                title=dict(text='Price', font=dict(color='#8b949e', size=11)),
+                tickformat=',',
+            ),
+            margin=dict(l=60, r=20, t=48, b=48),
+            hovermode='x unified',
+        )
+
         st.plotly_chart(fig, use_container_width=True)
     
     with col_right:
