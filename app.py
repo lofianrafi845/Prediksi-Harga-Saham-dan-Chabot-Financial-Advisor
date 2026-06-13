@@ -475,8 +475,10 @@ with tab1:
     with col_left:
         st.markdown(f'<div class="section-header">Riwayat & Prediksi Harga — {selected_ticker}</div>', unsafe_allow_html=True)
         
-        # Historical data (last 180 days)
-        df_hist = df_sel.tail(180)
+        # Historical data (from January 2026)
+        df_hist = df_sel[df_sel['Tanggal'] >= '2026-01-01']
+        if df_hist.empty:
+            df_hist = df_sel.tail(180)  # fallback jika tidak ada data sejak Jan 2026
         hist_dates  = df_hist['Tanggal'].tolist()
         hist_prices = df_hist['Close_Price'].tolist()
         hist_ma5    = df_hist['MA5'].tolist()
@@ -836,28 +838,7 @@ with tab3:
         fig_bar.update_yaxes(showgrid=True, gridcolor='#1e293b')
         st.plotly_chart(fig_bar, use_container_width=True)
 
-    st.markdown('<div class="section-header">Heatmap Korelasi Fitur</div>', unsafe_allow_html=True)
-    
-    features = ['Close_Price', 'Basic EPS', 'DER', 'ROA', 'ROE', 'MA5', 'MA20', 'Volatility20']
-    corr = df_sel[features].corr().round(2)
-    
-    fig_heat = go.Figure(data=go.Heatmap(
-        z=corr.values,
-        x=corr.columns.tolist(),
-        y=corr.columns.tolist(),
-        colorscale='RdBu',
-        zmid=0,
-        text=corr.values.round(2),
-        texttemplate="%{text}",
-        textfont=dict(size=10),
-    ))
-    fig_heat.update_layout(
-        height=380, paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(15,23,42,0.8)',
-        font=dict(color='#94a3b8'),
-        margin=dict(l=0, r=0, t=10, b=0),
-    )
-    st.plotly_chart(fig_heat, use_container_width=True)
+
 
 # ── Footer ────────────────────────────────────────────────────
 st.markdown("""
