@@ -1,4 +1,4 @@
-# 📈 Prediksi Harga Saham & Chatbot Financial Advisor
+# 📈 Stock Master AI - Prediksi Harga Saham & Chatbot Financial Advisor
 
 Selamat datang di aplikasi **Prediksi Harga Saham IDX** berbasis AI! Aplikasi ini hadir sebagai co-pilot Anda dalam menavigasi pasar saham Indonesia — mengubah data kompleks menjadi prediksi yang mudah dipahami langsung di browser.
 
