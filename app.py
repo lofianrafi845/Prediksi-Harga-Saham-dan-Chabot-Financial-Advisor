@@ -4,6 +4,7 @@ import numpy as np
 import os
 import json
 import time
+import pickle
 from datetime import datetime, timedelta
 import getpass
 
@@ -270,8 +271,57 @@ def generate_demo_data():
             })
     return pd.DataFrame(rows)
 
+@st.cache_resource
+def load_models():
+    """Load trained XGBoost model and scaler from pickle files."""
+    xgb_path     = os.path.join('model', 'xgb_model.pkl')
+    scaler_path  = os.path.join('model', 'scaler.pkl')
+    metrics_path = os.path.join('model', 'model_metrics.pkl')
+    
+    result = {"xgb": None, "scaler": None, "metrics": None, "loaded": False}
+    try:
+        if os.path.exists(xgb_path) and os.path.exists(scaler_path):
+            with open(xgb_path, 'rb')    as f: result['xgb']    = pickle.load(f)
+            with open(scaler_path, 'rb') as f: result['scaler'] = pickle.load(f)
+            if os.path.exists(metrics_path):
+                with open(metrics_path, 'rb') as f: result['metrics'] = pickle.load(f)
+            result['loaded'] = True
+    except Exception:
+        pass
+    return result
+
+def predict_xgb_real(df_ticker, future_days, xgb_model, scaler):
+    """Prediksi harga menggunakan model XGBoost terlatih dari pickle."""
+    FEATURES = ['Close_Price', 'Basic EPS', 'DER', 'ROA', 'ROE',
+                'MA5', 'MA20', 'Volatility20']
+    # Gunakan baris terakhir sebagai titik awal, lalu iterasi rolling
+    last_row = df_ticker[FEATURES].iloc[-1].copy()
+    preds = []
+    current = last_row.copy()
+    
+    # Ambil window harga historis untuk update MA
+    price_window = df_ticker['Close_Price'].values[-20:].tolist()
+    
+    for _ in range(future_days):
+        X_input = scaler.transform([current.values])
+        next_price = float(xgb_model.predict(X_input)[0])
+        next_price = max(next_price, 1.0)
+        preds.append(next_price)
+        
+        # Update rolling features untuk iterasi berikutnya
+        price_window.append(next_price)
+        if len(price_window) > 20:
+            price_window.pop(0)
+        current['Close_Price'] = next_price
+        current['MA5']  = np.mean(price_window[-5:])
+        current['MA20'] = np.mean(price_window[-20:])
+        vol_arr = np.array(price_window)
+        current['Volatility20'] = (np.std(vol_arr) / (np.mean(vol_arr) + 1e-9))
+    
+    return np.array(preds)
+
 def simulate_xgb_prediction(df_ticker, future_days=30):
-    """Simulate XGBoost-style predictions (deterministic from data)."""
+    """Fallback: Simulasi prediksi XGBoost jika model pickle tidak tersedia."""
     prices = df_ticker['Close_Price'].values
     last   = prices[-1]
     trend  = (prices[-1] - prices[-20]) / 20 if len(prices) >= 20 else 0
@@ -493,9 +543,15 @@ with tab1:
             if current_date.weekday() < 5:
                 fut_dates.append(current_date)
         
-        # Generate predictions
+        # Generate predictions — gunakan model pickle jika tersedia
+        models = load_models()
         np.random.seed(int(time.time()) % 100)
-        xgb_preds  = simulate_xgb_prediction(df_hist, future_days)
+        
+        if models['loaded'] and model_choice in ("XGBoost", "Ensemble (XGB + LSTM)"):
+            xgb_preds = predict_xgb_real(df_hist, future_days, models['xgb'], models['scaler'])
+        else:
+            xgb_preds = simulate_xgb_prediction(df_hist, future_days)
+        
         lstm_preds = simulate_lstm_prediction(df_hist, future_days)
         ens_preds  = (xgb_preds * 0.5 + lstm_preds * 0.5)
         
@@ -622,18 +678,45 @@ with tab1:
             <div class="metric-value prediction-down">Rp {min(active_pred):,.0f}</div>
         </div>""", unsafe_allow_html=True)
         
-        # Model performance simulation
-        st.markdown('<div class="section-header">Performa Model (Simulasi)</div>', unsafe_allow_html=True)
-        perf = {
-            "XGBoost":  {"RMSE": "245.3", "MAE": "189.2", "R²": "0.94"},
-            "LSTM":     {"RMSE": "198.7", "MAE": "161.5", "R²": "0.96"},
-            "Ensemble (XGB + LSTM)": {"RMSE": "175.4", "MAE": "142.3", "R²": "0.97"},
-        }[model_choice]
+        # Model performance — gunakan metrik nyata jika tersedia
+        is_xgb_real = models['loaded'] and model_choice in ("XGBoost", "Ensemble (XGB + LSTM)")
+        real_metrics = models.get('metrics') if models else None
+
+        if is_xgb_real and real_metrics:
+            st.markdown('<div class="section-header">Performa Model (Data Nyata)</div>', unsafe_allow_html=True)
+            if model_choice == "XGBoost":
+                perf = {
+                    "RMSE": f"{real_metrics['RMSE']:,.2f}",
+                    "MAE":  f"{real_metrics['MAE']:,.2f}",
+                    "R\u00b2":   f"{real_metrics['R2']:.4f}",
+                }
+            else:  # Ensemble
+                perf = {
+                    "RMSE (XGB)": f"{real_metrics['RMSE']:,.2f}",
+                    "MAE (XGB)":  f"{real_metrics['MAE']:,.2f}",
+                    "R\u00b2 (XGB)":   f"{real_metrics['R2']:.4f}",
+                }
+        else:
+            st.markdown('<div class="section-header">Performa Model (Simulasi)</div>', unsafe_allow_html=True)
+            perf = {
+                "XGBoost":  {"RMSE": "245.3", "MAE": "189.2", "R\u00b2": "0.94"},
+                "LSTM":     {"RMSE": "198.7", "MAE": "161.5", "R\u00b2": "0.96"},
+                "Ensemble (XGB + LSTM)": {"RMSE": "175.4", "MAE": "142.3", "R\u00b2": "0.97"},
+            }.get(model_choice, {})
+
         for k, v in perf.items():
             st.markdown(f"<div style='display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid #1e293b'>"
                         f"<span style='color:#94a3b8;font-size:0.85rem'>{k}</span>"
                         f"<span style='color:#f8fafc;font-weight:600;font-size:0.85rem'>{v}</span></div>",
                         unsafe_allow_html=True)
+
+        if is_xgb_real:
+            st.markdown("<div style='color:#10b981;font-size:0.72rem;margin-top:0.4rem'>&#10003; Model nyata (pickle) aktif</div>",
+                        unsafe_allow_html=True)
+        else:
+            st.markdown("<div style='color:#f59e0b;font-size:0.72rem;margin-top:0.4rem'>&#9888; Simulasi (model pickle tidak ditemukan)</div>",
+                        unsafe_allow_html=True)
+
 
         # Trend signal
         st.markdown('<div class="section-header">Sinyal Teknikal</div>', unsafe_allow_html=True)

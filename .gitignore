@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Model files generated locally (besar, regenerate via train_models.py)
+# model/*.pkl    <- diaktifkan jika ingin exclude dari git
+# model/*.keras
+
+# File duplikat & scratch
+appss.py
+nb_output.txt
+read_nb.py
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Environment
+.env
+venv/
+.venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
